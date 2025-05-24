@@ -1,8 +1,22 @@
 import * as pdfjs from "pdfjs-dist";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.mjs",
-  import.meta.url
-).toString();
+import pdfjsWorker from "./pdf.worker.mjs?url";
 
-export default pdfjs;
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+const matches: string[] = [
+  "*://meet.google.com/*",
+  "*://*.zoom.us/*",
+  "*://teams.live.com/*",
+];
+
+const isSupportedPlatform = (url: string, patterns: string[]): boolean => {
+  return patterns.some((pattern) => {
+    const escaped = pattern.replace(/[-/\\^$+?.()|[\]{}]/g, "\\$&");
+    const regexPattern = "^" + escaped.replace(/\*/g, ".*") + "$";
+    const regex = new RegExp(regexPattern);
+    return regex.test(url);
+  });
+};
+
+export { pdfjs, matches, isSupportedPlatform };

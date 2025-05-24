@@ -15,6 +15,11 @@ export default defineConfig({
     },
   }),
   manifest: {
+    name: "Kalma Copilot",
+    version: "1.0",
+    description:
+      "Your AI assistant for online interviews. Provides real-time support during virtual meeting platforms.",
+    homepage_url: "https://mrkkvnsndvl.vercel.app/",
     permissions: ["storage", "offscreen", "tabs", "activeTab", "tabCapture"],
   },
 });

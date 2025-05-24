@@ -134,6 +134,7 @@
   .animate-dots span {
     opacity: 0;
     animation: blink 1.4s infinite both;
+    font-weight: bold;
   }
   .animate-dots span:nth-child(1) {
     animation-delay: 0s;

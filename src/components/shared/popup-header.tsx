@@ -20,6 +20,14 @@ const PopupHeader = () => {
         alt="Kalma Copilot Icon"
       />
       <span className="text-base font-bold">Kalma Copilot</span>
+      <a
+        href="https://kalma-copilot.vercel.app"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ml-auto text-sm hover:underline underline-offset-2 text-muted-foreground hover:text-primary"
+      >
+        How it works
+      </a>
     </header>
   );
 };

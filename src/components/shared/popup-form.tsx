@@ -1,10 +1,11 @@
+import { storage } from "#imports";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import pdfjs from "@/constants";
+import { isSupportedPlatform, matches, pdfjs } from "@/constants";
 import { useForm } from "@tanstack/react-form";
 
 const PopupForm = () => {
@@ -15,16 +16,36 @@ const PopupForm = () => {
     resume: null,
     openRouterAPIKey: "",
     aiModel: "",
-    deepgramAPIKey: "",
   });
 
   const form = useForm({
     defaultValues: values,
     onSubmit: async ({ value }) => {
       try {
+        const [tab] = await browser.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+
+        if (tab.url && !isSupportedPlatform(tab.url, matches)) {
+          toast.error(
+            "Current platform is not supported. Please launch Kalma Copilot on a supported platform such as Google Meet, Zoom, or Microsoft Teams."
+          );
+          return;
+        }
+
+        if (tab.id) {
+          await browser.tabs.sendMessage(tab.id, {
+            action: "inject-content",
+          });
+          await browser.runtime.sendMessage({
+            type: "start-audio-capture",
+            tabId: tab.id,
+          });
+        }
         await storage.setItem("local:popup-form", value);
       } catch (error) {
-        console.log(error);
+        toast.error("Failed to launch.");
       }
     },
   });
@@ -35,7 +56,7 @@ const PopupForm = () => {
         const values = await storage.getItem("local:popup-form");
         setValues(values as PopupForm);
       } catch (error) {
-        toast.error("Failed to get interview setup");
+        toast.error("Failed to get interview setup data.");
       }
     };
     PopupForm();
@@ -51,9 +72,7 @@ const PopupForm = () => {
         }}
       >
         <div className="flex flex-col p-4 gap-y-2">
-          <h3 className="mb-2 text-base font-medium">
-            Interview Setup
-          </h3>
+          <h3 className="mb-2 text-base font-medium">Interview Setup</h3>
           <form.Field
             name="jobTitle"
             validators={{
@@ -67,7 +86,7 @@ const PopupForm = () => {
             {(field) => (
               <div className="flex flex-col gap-y-1">
                 <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="jobTitle">Job Title (Required)</Label>
+                  <Label htmlFor="jobTitle">Job Title</Label>
                   <Input
                     className="placeholder:text-sm"
                     type="text"
@@ -99,7 +118,7 @@ const PopupForm = () => {
             {(field) => (
               <div className="flex flex-col gap-y-1">
                 <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="companyName">Company Name (Required)</Label>
+                  <Label htmlFor="companyName">Company Name</Label>
                   <Input
                     className="placeholder:text-sm"
                     type="text"
@@ -128,9 +147,7 @@ const PopupForm = () => {
             {(field) => (
               <div className="flex flex-col gap-y-1">
                 <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="jobDescription">
-                    Job Description (Required)
-                  </Label>
+                  <Label htmlFor="jobDescription">Job Description</Label>
                   <Input
                     className="placeholder:text-sm"
                     type="file"
@@ -183,7 +200,7 @@ const PopupForm = () => {
             {(field) => (
               <div className="flex flex-col gap-y-1">
                 <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="resume">Resumé (Required)</Label>
+                  <Label htmlFor="resume">Resumé</Label>
                   <Input
                     className="placeholder:text-sm"
                     type="file"
@@ -225,7 +242,7 @@ const PopupForm = () => {
               </div>
             )}
           </form.Field>
-          <h3 className="mb-2 text-base font-medium">API Configuration</h3>
+          <h3 className="mb-2 text-base font-medium">OpenRouter Setup</h3>
           <form.Field
             name="openRouterAPIKey"
             validators={{
@@ -237,9 +254,7 @@ const PopupForm = () => {
             {(field) => (
               <div className="flex flex-col gap-y-1">
                 <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="openRouterAPIKey">
-                    OpenRouter API Key (Required)
-                  </Label>
+                  <Label htmlFor="openRouterAPIKey">OpenRouter API Key</Label>
                   <Input
                     className="placeholder:text-sm"
                     type="password"
@@ -255,31 +270,6 @@ const PopupForm = () => {
                     {field.state.meta.errors.join(", ")}
                   </em>
                 ) : null}
-                <div>
-                  <h4 className="text-sm">How to get an OpenRouter API key?</h4>
-                  <ul>
-                    <ol className="text-xs">
-                      1. Sign up for an account at the&nbsp;
-                      <a
-                        className="font-medium underline"
-                        href="https://openrouter.ai/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        OpenRouter
-                      </a>
-                      &nbsp;website
-                    </ol>
-                    <ol className="text-xs">
-                      2. Navigate to the API keys section in your account
-                      dashboard and create an API key
-                    </ol>
-                    <ol className="text-xs">
-                      3. Copy and paste the key into the field above
-                    </ol>
-                    <ol>4. Choose low latency AI model for fast response</ol>
-                  </ul>
-                </div>
               </div>
             )}
           </form.Field>
@@ -296,7 +286,7 @@ const PopupForm = () => {
             {(field) => (
               <div className="flex flex-col gap-y-1">
                 <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="aiModel">AI Model (Required)</Label>
+                  <Label htmlFor="aiModel">AI Model</Label>
                   <Input
                     className="placeholder:text-sm"
                     type="text"
@@ -315,64 +305,8 @@ const PopupForm = () => {
               </div>
             )}
           </form.Field>
-          <form.Field
-            name="deepgramAPIKey"
-            validators={{
-              onChange: ({ value }) => {
-                return value.trim() === "" ? "API key is required" : undefined;
-              },
-            }}
-          >
-            {(field) => (
-              <div className="flex flex-col gap-y-1">
-                <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="deepgramAPIKey">
-                    Deepgram API Key (Required)
-                  </Label>
-                  <Input
-                    className="placeholder:text-sm"
-                    type="password"
-                    id="deepgramAPIKey"
-                    name="deepgramAPIKey"
-                    placeholder="Enter API key"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
-                </div>
-                {field.state.meta.errors ? (
-                  <em className="text-red-500" role="alert">
-                    {field.state.meta.errors.join(", ")}
-                  </em>
-                ) : null}
-                <div>
-                  <h4 className="text-sm">How to get a Deepgram API key?</h4>
-                  <ul>
-                    <ol className="text-xs">
-                      1. Sign up for an account at the&nbsp;
-                      <a
-                        className="font-medium underline"
-                        href="https://deepgram.com/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Deepgram
-                      </a>
-                      &nbsp;website
-                    </ol>
-                    <ol className="text-xs">
-                      2. Navigate to the API keys section in your account
-                      dashboard and create an API key
-                    </ol>
-                    <ol className="text-xs">
-                      3. Copy and paste the key into the field above
-                    </ol>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </form.Field>
         </div>
-        <div className="p-4">
+        <div className="px-4 pb-4">
           <Button
             type="submit"
             className="w-full cursor-pointer"

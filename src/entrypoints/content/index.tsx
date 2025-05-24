@@ -9,6 +9,8 @@ export default defineContentScript({
   cssInjectionMode: "ui",
 
   async main(ctx) {
+    let isMounted = false;
+
     const ui = await createShadowRootUi(ctx, {
       name: "kalma-copilot",
       position: "overlay",
@@ -20,15 +22,29 @@ export default defineContentScript({
         const content = document.createElement("div");
         container.append(content);
         const root = ReactDOM.createRoot(content);
-        root.render(<Content />);
+        root.render(
+          <Content
+            onClose={async () => {
+              await browser.runtime.sendMessage({ type: "stop-audio-capture" });
+              ui.remove();
+              isMounted = false;
+            }}
+          />
+        );
         return root;
       },
 
       onRemove: (root) => {
         root?.unmount();
+        isMounted = false;
       },
     });
 
-    ui.mount();
+    browser.runtime.onMessage.addListener((message) => {
+      if (message.action === "inject-content" && !isMounted) {
+        ui.mount();
+        isMounted = true;
+      }
+    });
   },
 });
