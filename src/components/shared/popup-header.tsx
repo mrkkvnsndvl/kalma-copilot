@@ -21,7 +21,7 @@ const PopupHeader = () => {
       />
       <span className="text-base font-bold">Kalma Copilot</span>
       <a
-        href="https://kalma-copilot.vercel.app"
+        href="https://kalma-copilot.vercel.app/#demo"
         target="_blank"
         rel="noopener noreferrer"
         className="ml-auto text-sm hover:underline underline-offset-2 text-muted-foreground hover:text-primary"
