@@ -19,7 +19,7 @@ export default defineConfig({
     version: "1.0",
     description:
       "Your AI assistant for online interviews. Provides real-time support during virtual meeting platforms.",
-    homepage_url: "https://mrkkvnsndvl.vercel.app/",
+    homepage_url: "https://kalma-copilot.vercel.app/",
     permissions: ["storage", "offscreen", "tabs", "activeTab", "tabCapture"],
   },
 });
